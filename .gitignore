@@ -1,1 +1,23 @@
+# Folders
+outputs/
+core/build/
+__pycache__/
+.venv/
+
+# C++ Binaries & Temp
+*.o
+*.obj
+*.exe
+omr_engine
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Data & Test
+*.data
+test_results.json
+
+# Files
 .docx
+.vscode/
