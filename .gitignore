@@ -1,6 +1,7 @@
 # Folders
 outputs/
 core/build/
+libs/
 __pycache__/
 .venv/
 

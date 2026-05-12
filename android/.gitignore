@@ -1,0 +1,30 @@
+# Gradle & Build
+.gradle/
+*.iml
+/local.properties
+/build/
+/app/build/
+/.idea/
+/captures/
+
+# Android Studio
+.DS_Store
+.cxx/
+.externalNativeBuild
+*.apk
+*.aab
+
+# Gradle wrapper (optional, but usually tracked for reproducibility)
+# !gradle/wrapper/
+
+# Native build
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.so
+
+# Dependencies (if using local copies)
+# Uncomment if needed:
+# /libs/

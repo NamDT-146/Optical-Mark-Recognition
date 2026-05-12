@@ -31,45 +31,27 @@ def parse_and_score(image_path: str, template_path: str, key_path: str, output_c
         print("Failed to read image.")
         return
 
-    corners = None
-    processed = scanner.preprocess_image(img)
-    square_contours = scanner.find_square_contours(processed)
-    
-    centers = []
-    for cnt in square_contours:
-        M = cv2.moments(cnt)
-        if M["m00"] != 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-            centers.append((cx, cy))
-            
-    if len(centers) == 4:
-        corners = scanner.sort_corners(centers)
-    elif len(centers) == 3:
-        corners = scanner.infer_fourth_anchor(centers)
-        corners = scanner.sort_corners(corners)
-        
+    with open(template_path, 'r', encoding='utf-8') as f:
+        template = json.load(f)
+    page_size = template.get("page_size_px", {"width": 2100, "height": 2970})
+    expected_w = int(page_size["width"])
+    expected_h = int(page_size["height"])
+
+    corners, scanner_debug = scanner.detect_anchors(img)
     if not corners or len(corners) < 4:
         print("Failed to detect anchoring corners.")
-        # Fall back to using the image as-is (e.g. if it's already warped)
         warped_img = img
     else:
-        # Define output size based on template
-        with open(template_path, 'r') as f:
-            template = json.load(f)
-        page_size = template.get("page_size_px", {"width": 2100, "height": 2970})
-        expected_w = int(page_size["width"])
-        expected_h = int(page_size["height"])
-        
-        dst_corners = np.float32([
-            [0, 0],
-            [expected_w, 0],
-            [expected_w, expected_h],
-            [0, expected_h]
-        ])
-        src_corners = np.float32(corners)
-        M_transform = cv2.getPerspectiveTransform(src_corners, dst_corners)
-        warped_img = cv2.warpPerspective(img, M_transform, (expected_w, expected_h))
+        warped_img, _ = scanner.warp_perspective(
+            img,
+            corners,
+            output_size=(expected_w, expected_h)
+        )
+
+    warped_output_path = "outputs/scanner_debug_ver2/normal_warped.png"
+    cv2.imwrite(warped_output_path, warped_img)
+    if scanner_debug is not None:
+        cv2.imwrite("outputs/scanner_debug_ver2/python_scanner_debug.png", scanner_debug)
 
     # 2. Parsing Answers
     parser = AnswerParser(template_path)
@@ -129,10 +111,8 @@ def parse_and_score(image_path: str, template_path: str, key_path: str, output_c
 if __name__ == "__main__":
     template_path = "test/templates/Professional_OMR_45.json"
     key_path = "test/keys/TEST_1.csv"
-    
-    # Using the pre-warped image for now to test the parsing and scoring directly,
-    # as the scanner might need tuning for this specific image.
-    img_path = "outputs/scanner_debug_ver2/normal_warped.png" 
+
+    img_path = "test/images/ver2/flash.jpg"
     out_csv = "outputs/scanner_debug_ver2/final_results.csv"
     
     parse_and_score(img_path, template_path, key_path, out_csv)

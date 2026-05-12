@@ -3,20 +3,41 @@
 #include <map>
 #include "../include/utils.hpp"
 #include "../include/grader.hpp"
+#include "../include/scanner.hpp"
 
 int main() {
-    std::string img_path = "../../outputs/scanner_debug_ver2/normal_warped.png";
+    std::string img_path = "../../test/images/ver2/normal.jpg";
     std::string key_path = "../../test/keys/TEST_1.csv";
     std::string out_csv = "../../outputs/scanner_debug_ver2/final_results_cpp.csv";
     std::string debug_path = "../../outputs/scanner_debug_ver2/cpp_debug.png";
+    std::string warped_out_path = "../../outputs/scanner_debug_ver2/normal_warped.png";
+    std::string scanner_debug_path = "../../outputs/scanner_debug_ver2/cpp_scanner_debug.png";
 
-    cv::Mat warped_img = cv::imread(img_path);
-    if(warped_img.empty()) {
+    cv::Mat input_img = cv::imread(img_path);
+    if(input_img.empty()) {
         std::cerr << "Failed to read image: " << img_path << std::endl;
         return -1;
     }
 
     std::cout << "Processing image: " << img_path << std::endl;
+
+    const omr::ScanWarpResult scan_result = omr::scanAndWarpOmrPage(
+        input_img,
+        cv::Size(2100, 2970),
+        true
+    );
+
+    if (!scan_result.success) {
+        std::cerr << "Failed to scan and warp image: " << scan_result.error << std::endl;
+        return -1;
+    }
+
+    if (!scan_result.debug_image.empty()) {
+        cv::imwrite(scanner_debug_path, scan_result.debug_image);
+    }
+
+    cv::Mat warped_img = scan_result.warped;
+    cv::imwrite(warped_out_path, warped_img);
 
     AnswerParser parser;
     GradingResult parsed = parser.parse_answers(warped_img, debug_path);
